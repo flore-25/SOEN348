@@ -1,0 +1,29 @@
+[{:id "B001"
+  :title "The Hobbit"
+  :author "J.R.R. Tolkien"
+  :genre "Fantasy"
+  :year 1937}
+
+ {:id "B002"
+  :title "Dune"
+  :author "Frank Herbert"
+  :genre "Science Fiction"
+  :year 1965}
+
+ {:id "B003"
+  :title "Foundation"
+  :author "Isaac Asimov"
+  :genre "Science Fiction"
+  :year 1951}
+
+ {:id "B004"
+  :title "The Martian"
+  :author "Andy Weir"
+  :genre "Science Fiction"
+  :year 2011}
+
+ {:id "B005"
+  :title "Pride and Prejudice"
+  :author "Jane Austen"
+  :genre "Classic"
+  :year 1813}]
