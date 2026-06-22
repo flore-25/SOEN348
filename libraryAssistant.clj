@@ -1,6 +1,7 @@
 (ns library-system.core
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.pprint :as pprint]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EDN File Operations
@@ -8,15 +9,15 @@
 
 (defn load-library
   [filename]
-  ;; TODO: Read EDN file and return vector of books
+  ;; Read EDN file and return vector of books.
   ;; Hint: use slurp + clojure.edn/read-string
-  [])
+  (edn/read-string (slurp filename)))
 
 (defn save-library
   [filename books]
-  ;; TODO: Write books back to EDN file
+  ;; Write books back to EDN file.
   ;; Hint: use spit + pr-str
-  nil)
+  (spit filename (with-out-str (pprint/pprint books))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Display Functions
@@ -24,42 +25,65 @@
 
 (defn display-book
   [book]
-  ;; TODO: Print a single book in formatted style
-  nil)
+  ;; Print a single book in formatted style.
+  (println "----------------------------------")
+  (println "ID:" (:id book))
+  (println "Title:" (:title book))
+  (println "Author:" (:author book))
+  (println "Genre:" (:genre book))
+  (println "Year:" (:year book)))
 
 (defn display-books
   [books]
-  ;; TODO:
   ;; - print total count
   ;; - sort by year
   ;; - display each book using display-book
-  nil)
+  (if (empty? books)
+    (println "No books found.")
+    (do
+      (println)
+      (println "Total Books:" (count books))
+      (doseq [book (sort-by :year books)]
+        (display-book book)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Search Functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn contains-ignore-case?
+  [text fragment]
+  (str/includes? (str/lower-case text) (str/lower-case fragment)))
+
 (defn search-by-title
   [books]
-  ;; TODO:
   ;; - prompt user for input
   ;; - case-insensitive search in :title
   ;; - display results
-  nil)
+  (println)
+  (print "Enter title fragment: ")
+  (flush)
+  (let [fragment (read-line)
+        matches (filter #(contains-ignore-case? (:title %) fragment) books)]
+    (display-books matches)))
 
 (defn search-by-author
   [books]
-  ;; TODO:
   ;; - prompt user for input
   ;; - case-insensitive search in :author
   ;; - display results
-  nil)
+  (println)
+  (print "Enter author name: ")
+  (flush)
+  (let [fragment (read-line)
+        matches (filter #(contains-ignore-case? (:author %) fragment) books)]
+    (display-books matches)))
 
 (defn search-menu
   [books]
   (println)
   (println "1. Search by Title")
   (println "2. Search by Author")
+  (println)
   (print "Enter option: ")
   (flush)
 
@@ -75,26 +99,46 @@
 
 (defn filter-by-genre
   [books]
-  ;; TODO:
   ;; - prompt user
   ;; - filter by :genre (case-sensitive)
   ;; - display results
-  nil)
+  (println)
+  (print "Enter genre: ")
+  (flush)
+  (let [genre (read-line)
+        matches (filter #(= (:genre %) genre) books)]
+    (display-books matches)))
 
 (defn filter-by-year-range
   [books]
-  ;; TODO:
   ;; - prompt user for min and max year
   ;; - filter books in range (inclusive)
   ;; - display results
-  nil)
+  (println)
+  (print "Enter minimum year: ")
+  (flush)
+  (let [minimum-year (Integer/parseInt (read-line))]
+    (print "Enter maximum year: ")
+    (flush)
+    (let [maximum-year (Integer/parseInt (read-line))
+          matches (filter #(<= minimum-year (:year %) maximum-year) books)]
+      (display-books matches))))
 
 (defn filter-menu
   [books]
-  ;; TODO:
   ;; - sub-menu for filter options
   ;; - call correct function
-  nil)
+  (println)
+  (println "1. Filter by Genre")
+  (println "2. Filter by Publication Year Range")
+  (println)
+  (print "Enter option: ")
+  (flush)
+  (let [choice (read-line)]
+    (case choice
+      "1" (filter-by-genre books)
+      "2" (filter-by-year-range books)
+      (println "Invalid option"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Add Book
@@ -102,11 +146,33 @@
 
 (defn add-book
   [books]
-  ;; TODO:
   ;; - prompt user for all fields
   ;; - create book map
   ;; - return (conj books new-book)
-  books)
+  (println)
+  (print "Enter Book ID: ")
+  (flush)
+  (let [id (read-line)]
+    (print "Enter Title: ")
+    (flush)
+    (let [title (read-line)]
+      (print "Enter Author: ")
+      (flush)
+      (let [author (read-line)]
+        (print "Enter Genre: ")
+        (flush)
+        (let [genre (read-line)]
+          (print "Enter Publication Year: ")
+          (flush)
+          (let [year (Integer/parseInt (read-line))
+                new-book {:id id
+                          :title title
+                          :author author
+                          :genre genre
+                          :year year}]
+            (println)
+            (println "Book added successfully.")
+            (conj books new-book)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Statistics
@@ -114,13 +180,32 @@
 
 (defn library-statistics
   [books]
-  ;; TODO:
   ;; - total books
   ;; - oldest book (min-key :year)
   ;; - newest book (max-key :year)
   ;; - unique genres (set)
   ;; - books per genre (group-by)
-  nil)
+  (println)
+  (println "Total Number of Books:" (count books))
+  (if (empty? books)
+    (println "No books found.")
+    (let [oldest-book (apply min-key :year books)
+          newest-book (apply max-key :year books)
+          grouped-by-genre (group-by :genre books)
+          unique-genres (reduce conj #{} (keys grouped-by-genre))
+          books-per-genre (frequencies (map :genre books))]
+      (println)
+      (println "Oldest Book:")
+      (display-book oldest-book)
+      (println)
+      (println "Newest Book:")
+      (display-book newest-book)
+      (println)
+      (println "Number of Unique Genres:" (count unique-genres))
+      (println)
+      (println "Books per Genre:")
+      (doseq [[genre total] (sort books-per-genre)]
+        (println (str genre ": " total))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main Menu
